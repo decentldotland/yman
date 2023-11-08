@@ -6,6 +6,9 @@ import Image from "next/image";
 const Board: NextPage = ({ }) => {
 
     const [width, setWidth] = useState(0);
+    const [diceImage, setDiceImage] = useState("/assets/roll_1.png");
+    const [diceNumber, setDiceNumber] = useState(1);
+    const [showDiceNumber, setShowDiceNumber] = useState(false);
 
     const rowTopUrl = "emerald_ore_1.png"
     const rowBottomUrl = "gold_ore_1.png"
@@ -17,6 +20,43 @@ const Board: NextPage = ({ }) => {
       const calculatedWidth = Math.floor((90 / 100) * screenHeight);
       setWidth(calculatedWidth);
     }, []);
+
+    const determineSeconds = () => {
+        setShowDiceNumber(false)
+        const randomNumber = Math.floor(Math.random() * 3) + 2;
+        let randomDiceNumber = 1;
+
+        const intervalId = setInterval(() => {
+            // Update dice image every 0.3 seconds
+            if(randomDiceNumber === 6) {
+                randomDiceNumber = 1;
+                setDiceImage(`/assets/roll_${randomDiceNumber}.png`);
+            } else {
+                randomDiceNumber++;
+                setDiceImage(`/assets/roll_${randomDiceNumber}.png`);
+            }
+        }, 100);
+
+        // Stop updating after reaching the specified time (randomNumber in seconds)
+        setTimeout(() => {
+            const randNumber = generateRandomDieNumber()
+            setDiceNumber((prevDiceNumber) => {
+                return randNumber;
+              });
+            setDiceImage(prev => {
+                return `/assets/roll_${randNumber}.png`;
+            })
+            setShowDiceNumber(true);
+            clearInterval(intervalId);
+
+        }, randomNumber * 1000);
+    
+
+    }
+
+    function generateRandomDieNumber() {
+        return Math.floor(Math.random() * 6) + 1;
+      }
 
     const sideStyling = "absolute flex flex-row w-[65%] mx-auto h-[16%] space-x-3"
     //style={{ backgroundImage: 'linear-gradient(to bottom right, #091833, #133e7c, #b000ff)' }} Old gradient
@@ -91,13 +131,31 @@ const Board: NextPage = ({ }) => {
             <div 
                 className="absolute left-3 px-2 py-5 flex flex-col justify-start
                             z-10 bg-opacity-20
-                            rounded-md card h-[95%] w-[320px] floating-board"
+                            rounded-md card h-[95%] w-[320px] floating-board text-white items-center"
                 style={{ 
                     backgroundImage: `url('/assets/andesite.png')`, 
                     backgroundSize: '5% 5%', // Adjust the percentage as needed
                     backgroundRepeat: 'repeat'
                 }}
             >
+                <h3 className="bg-black opacity-75 py-1 px-2 font-light mb-[120px]">sebastian1993.near</h3>
+                <div className="bg-black opacity-75 flex flex-col justify-start items-center space-y-3 w-[300px] py-3 mb-[120px]">
+                    <p>Players</p>
+                    <p>Anon.near</p>
+                    <p>Gostosa.near</p>
+                    <p>Pikachu.near</p>
+                </div>
+                <div className="flex flex-col justify-center items-center">
+                    <button onClick={() => determineSeconds()}>
+                        <Image 
+                            src={diceImage}
+                            height={50}
+                            width={50}
+                            alt="Die"
+                        />
+                    </button>
+                    {showDiceNumber && (<p className="text-white text-4xl font-bold">{diceNumber}</p>)}
+                </div>
             </div>
             {/* Obsidian Spaces */}
             <Image 
