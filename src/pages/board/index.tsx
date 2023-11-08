@@ -2,6 +2,7 @@ import Property from "@/components/property";
 import { NextPage } from "next/types";
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import axios from "axios";
 
 const Board: NextPage = ({ }) => {
 
@@ -47,11 +48,22 @@ const Board: NextPage = ({ }) => {
                 return `/assets/roll_${randNumber}.png`;
             })
             setShowDiceNumber(true);
+            console.log(localStorage.getItem("addy"));
+            console.log(localStorage.getItem("privvy"));
             clearInterval(intervalId);
 
         }, randomNumber * 1000);
     
 
+    }
+
+    const testSig = async() => {
+        const res = await axios.post("/api/genSig/", { 
+            addy: localStorage.getItem("addy"),
+            privvy: localStorage.getItem("privvy"),
+            message: "Test Message"
+        });
+        console.log(res);
     }
 
     function generateRandomDieNumber() {
@@ -144,6 +156,7 @@ const Board: NextPage = ({ }) => {
                     <p>Anon.near</p>
                     <p>Gostosa.near</p>
                     <p>Pikachu.near</p>
+                    <button onClick={() => testSig()}>test</button>
                 </div>
                 <div className="flex flex-col justify-center items-center">
                     <button onClick={() => determineSeconds()}>
