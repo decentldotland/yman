@@ -19,6 +19,9 @@ const Board: NextPage = ({ }) => {
     const [consoleOutput, setConsoleOutput] = useState(0);
     const [gameLobbyTx, setGameLobbyTx] = useState("");
 
+    const [playerList, setPlayerList] = useState<any>();
+    const [gameStarted, setGameStarted] = useState(false);
+
     const { selector, modal, accounts, accountId } = useWalletSelector();
     
     const rowTopUrl = "emerald_ore_1.png"
@@ -30,7 +33,51 @@ const Board: NextPage = ({ }) => {
       const screenHeight = window.innerHeight;
       const calculatedWidth = Math.floor((90 / 100) * screenHeight);
       setWidth(calculatedWidth);
+      const fetchGameStatus = async () => {
+        const gameStartedPay = await axios('/api/gameStarted');
+        setGameStarted(gameStartedPay.data);
+      }
+      fetchGameStatus();
+      
     }, []);
+
+
+    useEffect(() => {
+        const fetchData = async () => {
+          try {
+            // Axios GET request
+            const response = await axios.get('/api/getPlayerCount');
+    
+            // Process the response data
+            
+            //playerList array
+            //@ts-ignore
+            const nearIdsArray = Object.values(response.data.players).map(item => item.near_id);
+            console.log("LOOK: ", nearIdsArray);
+            setPlayerList(nearIdsArray)
+            // Check if the game has started based on the response or your logic
+            if (response.data.gameStarted) {
+              setGameStarted(true);
+            }
+          } catch (error) {
+            console.error('Error fetching data:', error);
+          }
+        };
+    
+        // Conduct Axios GET request every 2 seconds until gameStarted is true
+        const intervalId = setInterval(() => {
+          if (!gameStarted) {
+            fetchData();
+            console.log("fetching...");
+          } else {
+            clearInterval(intervalId); // Stop the interval when gameStarted is true
+          }
+        }, 2000);
+    
+        // Cleanup function to clear the interval when the component unmounts or gameStarted is true
+        return () => clearInterval(intervalId);
+      }, [gameStarted]);
+    
 
     const determineSeconds = () => {
         setShowDiceNumber(false)
@@ -122,9 +169,43 @@ const Board: NextPage = ({ }) => {
         return Math.floor(Math.random() * 6) + 1;
     }
 
-    function enterGameLobby(e: any) {
+    async function enterGameLobby(e: any) {
         e.preventDefault();
-        alert(gameLobbyTx);
+        const counter = await axios.get("/api/getCounter/")
+        const playerCount = await axios.get("/api/getPlayerCount/")
+        let playerToBeMade;
+        if(playerCount.data) {
+            playerToBeMade = Object.keys(playerCount.data.players).length + "1";
+        } else {
+            playerToBeMade = "1"
+        }
+        
+        const playerRes = await axios.post("/api/playerIdentity", {player: playerToBeMade})
+        const users = {
+            near_id: accountId,
+            evm_implicit_addr: playerRes.data.address,
+            payment_txid: gameLobbyTx
+        }
+
+        const lobbyResult = await axios.post("/api/addToLobby", {user: users});
+        if(lobbyResult.data.status === "SUCCESS") {
+            setConsoleOutput(2)
+        }
+/*
+const add = '{
+  "function":"addToLobby",
+  "admin_sig":"0xdbe7d39927d877fd2b1a255a07136647f4f0701819d9ea7faa54081bab8cd79c4e255d8b10fb9c9ec61046de28c9b45c02bc0a9d102741b7cd8279a0c1fbf0b71c",
+  "user":{"near_id":"sebastian1993.near",
+  "evm_implicit_addr":"0x999818c1313DC58b32D88078ecdfB40EA822aaa",
+  "payment_txid":"B2NkEpoTau5v1Dd8C4MbrKGiVHRbdkSwB7jahTTWKR4R"
+}
+}'
+*/
+        // Count the number of players in state
+        // Player address based on player number
+        //Tx id
+        // 
+
         //enter game logic backend
     }
 
@@ -191,6 +272,9 @@ const Board: NextPage = ({ }) => {
                         </form>
                     </div>
                 )}
+                {consoleOutput === 2 && (
+                    <p className="text-white">You have joined! Awaiting other players.</p>
+                )}
             </div>
             {/* Decoration within Vegetation in Control Panel */}
             <Image 
@@ -236,9 +320,9 @@ const Board: NextPage = ({ }) => {
                 }
                 <div className="bg-black opacity-75 flex flex-col justify-start items-center space-y-3 w-[300px] py-3 mb-[120px]">
                     <p className="font-bold underline">Players</p>
-                    <p>Anon.near</p>
-                    <p>Gostosa.near</p>
-                    <p>Pikachu.near</p>
+                    {playerList && playerList.length > 0 && playerList.map((item: any, _index: any) => (
+                        <p>{item}</p>
+                    ))}
                 </div>
                 <div className="flex flex-col justify-center items-center">
                     <button onClick={() => determineSeconds()}>
