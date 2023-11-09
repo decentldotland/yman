@@ -3,12 +3,7 @@ import { NextPage } from "next/types";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import axios from "axios";
-import { setupWalletSelector } from "@near-wallet-selector/core";
-import { setupModal } from "@near-wallet-selector/modal-ui";
-import { setupMeteorWallet } from "@near-wallet-selector/meteor-wallet";
-import { NEAR_CONTRACT, useWalletSelector } from "@/contexts/WalletSelectorContext";
-import * as nearAPI from "near-api-js";
-import { setupDefaultWallets } from "@near-wallet-selector/default-wallets";
+import { useWalletSelector } from "@/contexts/WalletSelectorContext";
 
 const Board: NextPage = ({ }) => {
 
@@ -21,6 +16,7 @@ const Board: NextPage = ({ }) => {
 
     const [playerList, setPlayerList] = useState<any>();
     const [gameStarted, setGameStarted] = useState(false);
+    const [currentPlayerTurn, setCurrentPlayerTurn] = useState("");
 
     const { selector, modal, accounts, accountId } = useWalletSelector();
     
@@ -53,7 +49,7 @@ const Board: NextPage = ({ }) => {
             //playerList array
             //@ts-ignore
             const nearIdsArray = Object.values(response.data.players).map(item => item.near_id);
-            console.log("LOOK: ", nearIdsArray);
+            console.log("TT: ", nearIdsArray)
             setPlayerList(nearIdsArray)
             // Check if the game has started based on the response or your logic
             if (response.data.gameStarted) {
@@ -68,6 +64,9 @@ const Board: NextPage = ({ }) => {
         const intervalId = setInterval(() => {
           if (!gameStarted) {
             fetchData();
+            if(playerList && playerList.includes(accountId) && currentPlayerTurn.length === 0) {
+                setConsoleOutput(prev => 2);
+            }
             console.log("fetching...");
           } else {
             clearInterval(intervalId); // Stop the interval when gameStarted is true
@@ -112,37 +111,6 @@ const Board: NextPage = ({ }) => {
 
     }
 
-    /*
-    async function testTransfer() {
-        if(accountId && accountId.length > 0) {
-            const wallet = await selector.wallet();
-            await wallet.signAndSendTransaction({ 
-                //transactions: [{
-                        signerId: accountId,
-                        receiverId: "okaay.near",
-                        actions: [
-                            {
-                                type: "Transfer",
-                                params: {
-                                    deposit: "1",
-                                },
-                            },
-                        ],
-                //}]
-            });
-
-        }
-    }
-    */
-
-    const testSig = async() => {
-        const res = await axios.post("/api/genSig/", { 
-            addy: localStorage.getItem("addy"),
-            privvy: localStorage.getItem("privvy"),
-            message: "Test Message"
-        });
-        console.log(res);
-    }
 
     useEffect(() => {
         if (!accountId) {
@@ -151,6 +119,7 @@ const Board: NextPage = ({ }) => {
             setConsoleOutput(1);
         }
       }, [accountId])
+
 
     const handleSignOut = async () => {
         const wallet = await selector.wallet();
@@ -167,6 +136,15 @@ const Board: NextPage = ({ }) => {
 
     function generateRandomDieNumber() {
         return Math.floor(Math.random() * 6) + 1;
+    }
+
+    console.log("CO", consoleOutput);
+
+    async function startGame() {
+        const startStatus = await axios('/api/startGame/');
+        if(startStatus.data.status === "SUCCESS") {
+            setGameStarted(true);
+        }
     }
 
     async function enterGameLobby(e: any) {
@@ -246,7 +224,7 @@ const Board: NextPage = ({ }) => {
             */}
             <div className="absolute top-[30px] left-[1175px] bg-black opacity-75 rounded-sm h-[300px] w-[350px] z-40 p-3">
                 {consoleOutput === 0 && (<button className="text-white" onClick={() => handleSignIn()}>Connect Wallet</button>)}
-                {consoleOutput === 1 && (
+                {consoleOutput === 1 && playerList && !playerList.includes(accountId) && (
                     <div className="flex flex-col">
                         <p className="text-white">1. Pay 1 Near to sebastian1993.near to enter game lobby.</p>
                         <br />
@@ -256,7 +234,7 @@ const Board: NextPage = ({ }) => {
                         </form>
                     </div>
                 )}
-                {consoleOutput === 2 && (
+                {playerList && playerList.includes(accountId) && (
                     <p className="text-white">You have joined! Awaiting other players.</p>
                 )}
             </div>
@@ -307,7 +285,12 @@ const Board: NextPage = ({ }) => {
                     {playerList && playerList.length > 0 && playerList.map((item: any, _index: any) => (
                         <p>{item}</p>
                     ))}
-                    {playerList && playerList.length > 0 && (<button className="text-emerald-500 font-bold text-lg">Start Game!</button>)}
+                    {playerList && !gameStarted && playerList.length > 0 && (
+                        <>
+                            <hr className="border-b border-gray-200 bg-gray-200 text-gray-200" />
+                            <button className="text-emerald-400 font-bold text-lg" onClick={() => startGame()}>Start Game!</button>
+                        </>
+                    )}
                 </div>
                 <div className="flex flex-col justify-center items-center">
                     <button onClick={() => determineSeconds()}>
