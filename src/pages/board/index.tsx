@@ -21,6 +21,8 @@ const Board: NextPage = ({ }) => {
     const [gameStarted, setGameStarted] = useState(false);
     const [currentPlayerTurn, setCurrentPlayerTurn] = useState("");
     const [gameWon, setGameWon] = useState(false);
+    const [actionActivated, setActionActivated] = useState("");
+    const [actionTxId, setActionTx] = useState("")
 
     const { selector, modal, accounts, accountId } = useWalletSelector();
     
@@ -66,7 +68,6 @@ const Board: NextPage = ({ }) => {
         // Cleanup function to clear the interval when the component unmounts or gameStarted is true
         return () => clearInterval(intervalId);
       }, [gameStarted]);
-
 
       useEffect(() => {
         const fetchData = async () => {
@@ -130,7 +131,8 @@ const Board: NextPage = ({ }) => {
 
         // Stop updating after reaching the specified time (randomNumber in seconds)
         setTimeout(() => {
-            const randNumber = generateRandomDieNumber()
+            //const randNumber = generateRandomDieNumber()
+            const randNumber = 4;
             setDiceNumber((prevDiceNumber) => {
                 return randNumber;
               });
@@ -138,6 +140,8 @@ const Board: NextPage = ({ }) => {
                 return `/assets/roll_${randNumber}.png`;
             })
             setShowDiceNumber(true);
+            // Submit Roll to MEM
+            submitRoll(randNumber);
             clearInterval(intervalId);
 
         }, randomNumber * 1000);
@@ -217,7 +221,66 @@ const Board: NextPage = ({ }) => {
         
     }
 
-    console.log("PL:  ", playerLocation)
+    async function sendActionTxid(e: any) {
+        e.preventDefault();
+        const res = await axios('/api/getPlayerCount/');
+        //@ts-ignore
+        const match = Object.entries(res.data.players).find(([_, value]) => value.near_id === accountId);
+        //@ts-ignore
+        axios.post("/api/roll/", {dice_result: [diceNumber,0], player_addr: match[0], player_sig: "", pay_plot_rule: actionTxId}).then((res) => {
+            console.log(" new:", res);
+        })
+        .catch(e => alert("Error in Roll"));
+
+    }
+
+    async function submitRoll(rolledNum: Number) {
+        //Check if there is an acitivty to do
+        const actionPositions: any = {
+            6: "Do a wallet to wallet transfer on Near. Any amount is good enough! Attach TXID below.",
+            11: "Swap Near for Ref on Ref Finance. Any amount is good enough! Attach TXID below.",
+            16: "Mint any NFT on Mintbase. Any amount is good enough! Attach TXID below."
+        }
+        const arrPos: any = [
+            "Do a wallet to wallet transfer on Near. Any amount is good enough! Attach TXID below.",
+            "Swap Near for Ref on Ref Finance. Any amount is good enough! Attach TXID below.",
+            "Mint any NFT on Mintbase. Any amount is good enough! Attach TXID below."
+        ]
+
+        const index = playerList.indexOf(accountId)
+        const currentLocation = playerLocation[index];
+        //const newLocation = currentLocation+rolledNum;
+        const newLocation = (currentLocation + rolledNum) % 20 || 20;
+        const toBeUpdated = [...playerLocation];
+
+        // Update the specific index in the copy
+        toBeUpdated[index] = newLocation;
+      
+        // Set the state with the updated array
+        setPlayerLocation(toBeUpdated);
+        const res = await axios('/api/getPlayerCount/');
+        //@ts-ignore
+        const match = Object.entries(res.data.players).find(([_, value]) => value.near_id === accountId);
+        // If special, do action
+        if (actionPositions.hasOwnProperty(newLocation)) {
+            setActionActivated(arrPos[index])
+            return false
+        } else {
+            //@ts-ignore
+            axios.post("/api/roll/", {dice_result: [diceNumber,0], player_addr: match[0], player_sig: "", pay_plot_rule: ""}).then((res) => {
+                console.log(" new:", res);
+            })
+            .catch(e => alert("Error in Roll"));
+            setActionActivated("");
+        } 
+        setActionActivated("")
+        // submit roll
+        
+        return false;
+
+        
+        //const { admin_sig, dice_result, player_addr, player_sig, pay_plot_rule } =
+    }
 
     const sideStyling = "absolute flex flex-row w-[65%] mx-auto h-[16%] space-x-3"
     return (
@@ -281,11 +344,20 @@ const Board: NextPage = ({ }) => {
                         </form>
                     </div>
                 )}
-                {playerList && playerList.includes(accountId) && !gameStarted && (
+                {playerList && playerList.includes(accountId) && !gameStarted && actionActivated && actionActivated.length == 0 && (
                     <p className="text-white">You have joined! Awaiting other players.</p>
                 )}
-                {gameStarted && currentPlayerTurn.length > 0 && (
+                {gameStarted && currentPlayerTurn.length > 0  && (
                     <p className="text-white">{`${currentPlayerTurn}, it is your turn!`}</p>
+                )}
+                {actionActivated.length > 0 && (
+                    <>
+                        <p className="text-white">{`Challenge! ${actionActivated}`}</p>
+                        <form onSubmit={sendActionTxid}>
+                            <input type="text" className="bg-gray-700 text-white" onChange={(e) => setActionTx(e.target.value)}/>
+                        </form>
+                    </>
+                    
                 )}
             </div>
             {/* Decoration within Vegetation in Control Panel */}

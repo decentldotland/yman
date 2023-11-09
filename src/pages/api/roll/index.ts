@@ -6,10 +6,11 @@ export default async function handler(
     req: NextApiRequest,
     res: NextApiResponse<any>
   ) {
+    
     try {
       const { user } = req.body;
       const payload = {
-        function: "addToLobby",
+        function: "roll",
         user
       };
 
@@ -36,8 +37,17 @@ export default async function handler(
         {}
       );
       res.status(200).json(data.data);
+    } catch (error) {
+      console.error(error);
+      //@ts-ignore
+      return res.status(error.status || 500).end(error.message);
+    }
 
-        /*
+    /*
+    const payload = {
+        function: "roll",
+        ...req.body
+      };
      res.status(200).json({
         functionId: CONTRACT_ADDR,
         inputs: [
@@ -57,10 +67,4 @@ export default async function handler(
         ],
       })
       */
-
-    } catch (error) {
-      console.error(error);
-      //@ts-ignore
-      return res.status(error.status || 500).end(error.message);
-    }
 }
