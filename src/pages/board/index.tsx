@@ -3,6 +3,12 @@ import { NextPage } from "next/types";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import axios from "axios";
+import { setupWalletSelector } from "@near-wallet-selector/core";
+import { setupModal } from "@near-wallet-selector/modal-ui";
+import { setupMeteorWallet } from "@near-wallet-selector/meteor-wallet";
+import { NEAR_CONTRACT, useWalletSelector } from "@/contexts/WalletSelectorContext";
+import * as nearAPI from "near-api-js";
+import { setupDefaultWallets } from "@near-wallet-selector/default-wallets";
 
 const Board: NextPage = ({ }) => {
 
@@ -10,7 +16,11 @@ const Board: NextPage = ({ }) => {
     const [diceImage, setDiceImage] = useState("/assets/roll_1.png");
     const [diceNumber, setDiceNumber] = useState(1);
     const [showDiceNumber, setShowDiceNumber] = useState(false);
+    const [consoleOutput, setConsoleOutput] = useState(0);
+    const [gameLobbyTx, setGameLobbyTx] = useState("");
 
+    const { selector, modal, accounts, accountId } = useWalletSelector();
+    
     const rowTopUrl = "emerald_ore_1.png"
     const rowBottomUrl = "gold_ore_1.png"
     const rowRightUrl = "red_ore_1.png"
@@ -48,14 +58,35 @@ const Board: NextPage = ({ }) => {
                 return `/assets/roll_${randNumber}.png`;
             })
             setShowDiceNumber(true);
-            console.log(localStorage.getItem("addy"));
-            console.log(localStorage.getItem("privvy"));
             clearInterval(intervalId);
 
         }, randomNumber * 1000);
     
 
     }
+
+    /*
+    async function testTransfer() {
+        if(accountId && accountId.length > 0) {
+            const wallet = await selector.wallet();
+            await wallet.signAndSendTransaction({ 
+                //transactions: [{
+                        signerId: accountId,
+                        receiverId: "okaay.near",
+                        actions: [
+                            {
+                                type: "Transfer",
+                                params: {
+                                    deposit: "1",
+                                },
+                            },
+                        ],
+                //}]
+            });
+
+        }
+    }
+    */
 
     const testSig = async() => {
         const res = await axios.post("/api/genSig/", { 
@@ -66,12 +97,39 @@ const Board: NextPage = ({ }) => {
         console.log(res);
     }
 
+    useEffect(() => {
+        if (!accountId) {
+            setConsoleOutput(0);
+        } else {
+            setConsoleOutput(1);
+        }
+      }, [accountId])
+
+    const handleSignOut = async () => {
+        const wallet = await selector.wallet();
+    
+        wallet.signOut().catch((err) => {
+          console.log("Failed to sign out");
+          console.error(err);
+        });
+    };
+
+    const handleSignIn = () => {
+        modal.show();
+    }
+
     function generateRandomDieNumber() {
         return Math.floor(Math.random() * 6) + 1;
-      }
+    }
+
+    function enterGameLobby(e: any) {
+        e.preventDefault();
+        alert(gameLobbyTx);
+        //enter game logic backend
+    }
 
     const sideStyling = "absolute flex flex-row w-[65%] mx-auto h-[16%] space-x-3"
-    //style={{ backgroundImage: 'linear-gradient(to bottom right, #091833, #133e7c, #b000ff)' }} Old gradient
+
     return (
         <div 
             className="relative w-screen h-screen flex justify-center items-center"
@@ -122,7 +180,17 @@ const Board: NextPage = ({ }) => {
             
             */}
             <div className="absolute top-[30px] left-[1175px] bg-black opacity-75 rounded-sm h-[300px] w-[350px] z-40 p-3">
-                <p className="text-white">Loading...</p>
+                {consoleOutput === 0 && (<button className="text-white" onClick={() => handleSignIn()}>Connect Wallet</button>)}
+                {consoleOutput === 1 && (
+                    <div className="flex flex-col">
+                        <p className="text-white">1. Pay 1 Near to sebastian1993.near to enter game lobby.</p>
+                        <br />
+                        <p className="text-white">2. Once paid, attach tx id below and press enter:</p>
+                        <form onSubmit={enterGameLobby}>
+                            <input type="text" className="bg-gray-700 text-white" onChange={(e) => setGameLobbyTx(e.target.value)}/>
+                        </form>
+                    </div>
+                )}
             </div>
             {/* Decoration within Vegetation in Control Panel */}
             <Image 
@@ -150,13 +218,27 @@ const Board: NextPage = ({ }) => {
                     backgroundRepeat: 'repeat'
                 }}
             >
-                <h3 className="bg-black opacity-75 py-1 px-2 font-light mb-[120px]">sebastian1993.near</h3>
+                {accountId ? 
+                    <>
+                        <div className="flex flex-row space-x-2 items-center bg-black opacity-75 py-1 px-2 mb-[10px]">
+                            <div className="text-emerald-500 bg-emerald-500 h-3 w-3 rounded-full"></div>
+                            <h3 className="font-light">{accountId}</h3>
+                        </div>
+                        <button className="bg-black opacity-75 py-1 px-2 font-light mb-[120px]" onClick={() => handleSignOut()}>
+                            
+                            <p className="text-white">Disconnect</p>
+                        </button>
+                    </>
+                :
+                    <button className="bg-black opacity-75 py-1 px-2 font-light mb-[120px]" onClick={() => handleSignIn()}>
+                        Connect
+                    </button>
+                }
                 <div className="bg-black opacity-75 flex flex-col justify-start items-center space-y-3 w-[300px] py-3 mb-[120px]">
-                    <p>Players</p>
+                    <p className="font-bold underline">Players</p>
                     <p>Anon.near</p>
                     <p>Gostosa.near</p>
                     <p>Pikachu.near</p>
-                    <button onClick={() => testSig()}>test</button>
                 </div>
                 <div className="flex flex-col justify-center items-center">
                     <button onClick={() => determineSeconds()}>

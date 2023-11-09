@@ -2,7 +2,7 @@ import '@/styles/globals.css'
 import type { AppProps } from 'next/app'
 import { Pixelify_Sans } from 'next/font/google'
 import { useEffect } from 'react';
-
+import { WalletSelectorContextProvider } from '@/contexts/WalletSelectorContext';
 const pixelify_sans = Pixelify_Sans({ subsets: ['latin'] })
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -15,13 +15,22 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return (
     <>
+
+      <WalletSelectorContextProvider>
+        <Component {...pageProps} />
+      </WalletSelectorContextProvider>
+      
+    </>
+  )
+}
+
+/*
       <style jsx global>{`
         html {
           font-family: ${pixelify_sans.style.fontFamily};
         }
       `}
       </style>
-      <Component {...pageProps} />
-    </>
-  )
-}
+
+
+*/
