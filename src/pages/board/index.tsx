@@ -191,22 +191,6 @@ const Board: NextPage = ({ }) => {
         if(lobbyResult.data.status === "SUCCESS") {
             setConsoleOutput(2)
         }
-/*
-const add = '{
-  "function":"addToLobby",
-  "admin_sig":"0xdbe7d39927d877fd2b1a255a07136647f4f0701819d9ea7faa54081bab8cd79c4e255d8b10fb9c9ec61046de28c9b45c02bc0a9d102741b7cd8279a0c1fbf0b71c",
-  "user":{"near_id":"sebastian1993.near",
-  "evm_implicit_addr":"0x999818c1313DC58b32D88078ecdfB40EA822aaa",
-  "payment_txid":"B2NkEpoTau5v1Dd8C4MbrKGiVHRbdkSwB7jahTTWKR4R"
-}
-}'
-*/
-        // Count the number of players in state
-        // Player address based on player number
-        //Tx id
-        // 
-
-        //enter game logic backend
     }
 
     const sideStyling = "absolute flex flex-row w-[65%] mx-auto h-[16%] space-x-3"
@@ -323,6 +307,7 @@ const add = '{
                     {playerList && playerList.length > 0 && playerList.map((item: any, _index: any) => (
                         <p>{item}</p>
                     ))}
+                    {playerList && playerList.length > 0 && (<button className="text-emerald-500 font-bold text-lg">Start Game!</button>)}
                 </div>
                 <div className="flex flex-col justify-center items-center">
                     <button onClick={() => determineSeconds()}>
