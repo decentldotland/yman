@@ -76,7 +76,6 @@ const Board: NextPage = ({ }) => {
             //playerList array
             //@ts-ignore
             const nearIdsArray = Object.values(response.data.players).map(item => item.near_id);
-            console.log("TT: ", nearIdsArray)
             setPlayerList(nearIdsArray)
             // Check if the game has started based on the response or your logic
             if (response.data.gameStarted) {
@@ -197,7 +196,6 @@ const Board: NextPage = ({ }) => {
     }
 
     const sideStyling = "absolute flex flex-row w-[65%] mx-auto h-[16%] space-x-3"
-    console.log("Tok: ", playerList);
     return (
         <div 
             className="relative w-screen h-screen flex justify-center items-center"
@@ -321,12 +319,13 @@ const Board: NextPage = ({ }) => {
                     )}
                 </div>
                 <div className="flex flex-col justify-center items-center">
-                    <button onClick={() => determineSeconds()}>
+                    <button onClick={currentPlayerTurn === accountId ? () => determineSeconds() : () => ""}>
                         <Image 
                             src={diceImage}
                             height={50}
                             width={50}
                             alt="Die"
+                            className={currentPlayerTurn === accountId ? "filter grayscale-0" : "filter grayscale cursor-none"}
                         />
                     </button>
                     {showDiceNumber && (<p className="text-white text-4xl font-bold">{diceNumber}</p>)}
