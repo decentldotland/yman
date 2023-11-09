@@ -10,8 +10,11 @@ const Board: NextPage = ({ }) => {
 
     const [width, setWidth] = useState(0);
     const [diceImage, setDiceImage] = useState("/assets/roll_1.png");
+    const [diceImage2, setDiceImage2] = useState("/assets/roll_1.png");
     const [diceNumber, setDiceNumber] = useState(1);
+    const [diceNumber2, setDiceNumber2] = useState(1);
     const [showDiceNumber, setShowDiceNumber] = useState(false);
+    const [showDiceNumber2, setShowDiceNumber2] = useState(false);
     const [consoleOutput, setConsoleOutput] = useState(0);
     const [gameLobbyTx, setGameLobbyTx] = useState("");
 
@@ -131,8 +134,7 @@ const Board: NextPage = ({ }) => {
 
         // Stop updating after reaching the specified time (randomNumber in seconds)
         setTimeout(() => {
-            //const randNumber = generateRandomDieNumber()
-            const randNumber = 4;
+            const randNumber = generateRandomDieNumber()
             setDiceNumber((prevDiceNumber) => {
                 return randNumber;
               });
@@ -145,8 +147,40 @@ const Board: NextPage = ({ }) => {
             clearInterval(intervalId);
 
         }, randomNumber * 1000);
-    
+    }
 
+    const loadedAdventures = () => {
+        setShowDiceNumber2(false)
+        const randomNumber = Math.floor(Math.random() * 3) + 2;
+        let randomDiceNumber = 1;
+
+        const intervalId = setInterval(() => {
+            // Update dice image every 0.3 seconds
+            if(randomDiceNumber === 6) {
+                randomDiceNumber = 1;
+                setDiceImage2(`/assets/roll_${randomDiceNumber}.png`);
+            } else {
+                randomDiceNumber++;
+                setDiceImage2(`/assets/roll_${randomDiceNumber}.png`);
+            }
+        }, 100);
+
+        // Stop updating after reaching the specified time (randomNumber in seconds)
+        setTimeout(() => {
+            //const randNumber = generateRandomDieNumber()
+            const randNumber = 5;
+            setDiceNumber2((prevDiceNumber) => {
+                return randNumber;
+              });
+            setDiceImage2(prev => {
+                return `/assets/roll_${randNumber}.png`;
+            })
+            setShowDiceNumber2(true);
+            // Submit Roll to MEM
+            submitRoll(randNumber);
+            clearInterval(intervalId);
+
+        }, randomNumber * 1000);
     }
 
 
@@ -236,6 +270,7 @@ const Board: NextPage = ({ }) => {
 
     async function submitRoll(rolledNum: Number) {
         //Check if there is an acitivty to do
+        setActionActivated("")
         const actionPositions: any = {
             6: "Do a wallet to wallet transfer on Near. Any amount is good enough! Attach TXID below.",
             11: "Swap Near for Ref on Ref Finance. Any amount is good enough! Attach TXID below.",
@@ -263,7 +298,7 @@ const Board: NextPage = ({ }) => {
         const match = Object.entries(res.data.players).find(([_, value]) => value.near_id === accountId);
         // If special, do action
         if (actionPositions.hasOwnProperty(newLocation)) {
-            setActionActivated(arrPos[index])
+            setActionActivated(actionPositions[newLocation])
             return false
         } else {
             //@ts-ignore
@@ -344,7 +379,7 @@ const Board: NextPage = ({ }) => {
                         </form>
                     </div>
                 )}
-                {playerList && playerList.includes(accountId) && !gameStarted && actionActivated && actionActivated.length == 0 && (
+                {playerList && playerList.includes(accountId) && !gameStarted && (
                     <p className="text-white">You have joined! Awaiting other players.</p>
                 )}
                 {gameStarted && currentPlayerTurn.length > 0  && (
@@ -417,7 +452,7 @@ const Board: NextPage = ({ }) => {
                         </>
                     )}
                 </div>
-                <div className="flex flex-col justify-center items-center">
+                <div className="flex flex-col justify-center items-center mb-10">
                     <button onClick={currentPlayerTurn === accountId ? () => determineSeconds() : () => ""}>
                         <Image 
                             src={diceImage}
@@ -428,6 +463,18 @@ const Board: NextPage = ({ }) => {
                         />
                     </button>
                     {showDiceNumber && (<p className="text-white text-4xl font-bold">{diceNumber}</p>)}
+                </div>
+                <div className="flex flex-col justify-center items-center">
+                    <button onClick={currentPlayerTurn === accountId ? () => loadedAdventures() : () => ""}>
+                        <Image 
+                            src={diceImage2}
+                            height={50}
+                            width={50}
+                            alt="Die"
+                            className={currentPlayerTurn === accountId ? "filter grayscale-0" : "filter grayscale cursor-none"}
+                        />
+                    </button>
+                    {showDiceNumber2 && (<p className="text-white text-4xl font-bold">{diceNumber2}</p>)}
                 </div>
             </div>
             {/* Obsidian Spaces */}

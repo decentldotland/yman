@@ -10,5 +10,5 @@ export const player4Buffer: Buffer = Buffer.from("3BcDeFgHiJkLmNoPqRsTuVwXyZ0123
 // API
 export const MEM_READ_URL = "https://api.mem.tech/api/state/";
 export const MEM_WRITE_URL = "https://api.mem.tech/api/transactions/";
-export const CONTRACT_ADDR = "CR3SNCnoLKX2nsUO9CKzm254al4e0nxNpC7cpZvYcRw";
+export const CONTRACT_ADDR = "dyLpVhW8g0GzpmxuiHPAyhQwU_M493WDDIVpQRyNn6o";
 export const MSG = "yoctomanji::"
