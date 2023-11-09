@@ -5,6 +5,7 @@ import Image from "next/image";
 import axios from "axios";
 import { useWalletSelector } from "@/contexts/WalletSelectorContext";
 import ChipHolder, { ChipHolderFlex } from "@/components/chipHolder";
+import Head from "next/head";
 
 const Board: NextPage = ({ }) => {
 
@@ -319,6 +320,11 @@ const Board: NextPage = ({ }) => {
 
     const sideStyling = "absolute flex flex-row w-[65%] mx-auto h-[16%] space-x-3"
     return (
+        <>
+        <Head>
+            <title>YoctoManji</title>
+            <link rel="icon" href="/diamond.png" />
+        </Head>
         <div 
             className="relative w-screen h-screen flex justify-center items-center"
             style={{ backgroundImage: `url('/assets/coarse_dirt.png')`, 
@@ -856,6 +862,7 @@ const Board: NextPage = ({ }) => {
             </div>
             <div></div>
         </div>
+        </>
     )
 };
   
