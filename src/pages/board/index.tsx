@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import axios from "axios";
 import { useWalletSelector } from "@/contexts/WalletSelectorContext";
+import ChipHolder, { ChipHolderFlex } from "@/components/chipHolder";
 
 const Board: NextPage = ({ }) => {
 
@@ -15,6 +16,8 @@ const Board: NextPage = ({ }) => {
     const [gameLobbyTx, setGameLobbyTx] = useState("");
 
     const [playerList, setPlayerList] = useState<any>();
+    const [playerColors, setPlayerColors] = useState<any>();
+    const [playerLocation, setPlayerLocation] = useState<any>();
     const [gameStarted, setGameStarted] = useState(false);
     const [currentPlayerTurn, setCurrentPlayerTurn] = useState("");
     const [gameWon, setGameWon] = useState(false);
@@ -76,7 +79,12 @@ const Board: NextPage = ({ }) => {
             //playerList array
             //@ts-ignore
             const nearIdsArray = Object.values(response.data.players).map(item => item.near_id);
+            //const nearIdsArray1 = Object.values(response.data.players).map(item => item.near_id);
             setPlayerList(nearIdsArray)
+            const gatheredColors = nearIdsArray.map((item: any, index: any) => generatePlayerColor(item))
+            setPlayerColors(gatheredColors);
+            setPlayerLocation(Array.from({ length: nearIdsArray.length }, () => 1));
+            
             // Check if the game has started based on the response or your logic
             if (response.data.gameStarted) {
               setGameStarted(true);
@@ -87,7 +95,7 @@ const Board: NextPage = ({ }) => {
         };
         fetchData();
         // Conduct Axios GET request every 2 seconds until gameStarted is true
-        const intervalId = setInterval(() => {
+        const intervalId = setInterval(() => { 
           if (!gameStarted) {
             fetchData();
             if(playerList && playerList.includes(accountId) && currentPlayerTurn.length === 0) {
@@ -146,6 +154,18 @@ const Board: NextPage = ({ }) => {
         }
       }, [accountId])
 
+    function generatePlayerColor(domain: string) {
+        let hash = 0;
+        for (let i = 0; i < domain.length; i++) {
+          hash = domain.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        let color = "#";
+        for (let i = 0; i < 3; i++) {
+          const value = (hash >> (i * 8)) & 0xff;
+          color += ("00" + value.toString(16)).substr(-2);
+        }
+        return color;
+    }
 
     const handleSignOut = async () => {
         const wallet = await selector.wallet();
@@ -188,12 +208,16 @@ const Board: NextPage = ({ }) => {
             evm_implicit_addr: playerRes.data.address,
             payment_txid: gameLobbyTx
         }
-
-        const lobbyResult = await axios.post("/api/addToLobby", {user: users});
-        if(lobbyResult.data.status === "SUCCESS") {
-            setConsoleOutput(2)
-        }
+        console.log("Before: ", users)
+        axios.post("/api/addToLobby", {user: users}).then((res) => {
+            setConsoleOutput(2);
+            console.log("LB:", res);
+        })
+        .catch(e => alert("Error in Lobby"));
+        
     }
+
+    console.log("PL:  ", playerLocation)
 
     const sideStyling = "absolute flex flex-row w-[65%] mx-auto h-[16%] space-x-3"
     return (
@@ -247,7 +271,7 @@ const Board: NextPage = ({ }) => {
             */}
             <div className="absolute top-[30px] left-[1175px] bg-black opacity-75 rounded-sm h-[300px] w-[350px] z-40 p-3">
                 {consoleOutput === 0 && !gameStarted && (<button className="text-white" onClick={() => handleSignIn()}>Connect Wallet</button>)}
-                {consoleOutput === 1 && playerList && !playerList.includes(accountId) && !gameStarted && (
+                {consoleOutput === 1 && !playerList && !gameStarted && (
                     <div className="flex flex-col">
                         <p className="text-white">1. Pay 1 Near to sebastian1993.near to enter game lobby.</p>
                         <br />
@@ -309,7 +333,10 @@ const Board: NextPage = ({ }) => {
                 <div className="bg-black opacity-75 flex flex-col justify-start items-center space-y-3 w-[300px] py-3 mb-[120px]">
                     <p className="font-bold underline">Players</p>
                     {playerList && playerList.length > 0 && playerList.map((item: any, _index: any) => (
-                        <p>{item}</p>
+                        <div className="flex flex-row items-center space-x-1 justify-center">
+                            <div className="w-2 h-2 rounded-full" style={{backgroundColor: playerColors[_index]}}></div>
+                            <p>{item}</p>
+                        </div>
                     ))}
                     {playerList && !gameStarted && playerList.length > 0 && (
                         <>
@@ -339,12 +366,25 @@ const Board: NextPage = ({ }) => {
                 alt="Obsidian"
                 className="absolute top-[35px] left-[1000px] shadow-md z-20 rounded-full floating-box z-30"
             />
+            <ChipHolderFlex 
+                className="z-40 absolute top-[35px] left-[1000px] w-[100px] h-[100px]"
+                plotPosition={"6"}
+                playerColors={playerColors}
+                playerLocations={playerLocation}
+
+            />
             <Image 
                 src="/assets/obsidian.png"
                 height={90}
                 width={90}
                 alt="Obsidian"
                 className="absolute top-[608px] left-[1000px] shadow-md z-20 rounded-full floating-box z-30"
+            />
+            <ChipHolderFlex 
+                className="z-40 absolute top-[608px] left-[1000px] w-[100px] h-[100px]"
+                plotPosition={"11"}
+                playerColors={playerColors}
+                playerLocations={playerLocation}
             />
             <Image 
                 src="/assets/obsidian.png"
@@ -353,13 +393,25 @@ const Board: NextPage = ({ }) => {
                 alt="Obsidian"
                 className="absolute top-[608px] left-[445px] shadow-md z-20 rounded-full floating-box z-30"
             />
+            <ChipHolderFlex 
+                className="z-40 absolute top-[608px] left-[445px] w-[100px] h-[100px]"
+                plotPosition={"16"}
+                playerColors={playerColors}
+                playerLocations={playerLocation}
+            />
             {/* Arrow */}
             <Image 
                 src="/assets/arrow.png"
                 height={35}
                 width={35}
                 alt="Arrow"
-                className="absolute top-[37px] left-[473px] z-20 z-40 transform rotate-90"
+                className="absolute top-[40px] left-[477px] z-30 transform rotate-90"
+            />
+            <ChipHolderFlex 
+                className="z-40 absolute top-[35px] left-[444px] z-40 w-[100px] h-[100px]"
+                plotPosition={"1"}
+                playerColors={playerColors}
+                playerLocations={playerLocation}
             />
             <div 
                 className="relative h-[95%] justify-center items-center z-20 border-2 border-gray-700 shadow-2xl rounded-md floating-board"
@@ -398,6 +450,28 @@ const Board: NextPage = ({ }) => {
                     />
 
                 </div>
+                <div className={`${sideStyling} top-0 left-1/2 transform -translate-x-1/2 -rotate-180`}>
+                    <ChipHolder
+                        plotPosition={"5"}
+                        playerColors={playerColors}
+                        playerLocations={playerLocation}
+                    />
+                    <ChipHolder
+                        plotPosition={"4"}
+                        playerColors={playerColors}
+                        playerLocations={playerLocation}
+                    />
+                    <ChipHolder
+                        plotPosition={"3"}
+                        playerColors={playerColors}
+                        playerLocations={playerLocation}
+                    />
+                    <ChipHolder
+                        plotPosition={"2"}
+                        playerColors={playerColors}
+                        playerLocations={playerLocation}
+                    />
+                </div>
                 {/* Front */}
                 <div className={`${sideStyling} bottom-0 left-[50%] left-1/2 and transform -translate-x-1/2`}>
                     <Property 
@@ -415,6 +489,28 @@ const Board: NextPage = ({ }) => {
                     <Property 
                         players={['red', 'blue']}
                         backgroundImg={rowBottomUrl}
+                    />
+                </div>
+                <div className={`${sideStyling} bottom-0 left-[50%] left-1/2 and transform -translate-x-1/2`}>
+                    <ChipHolder
+                        plotPosition={"15"}
+                        playerColors={playerColors}
+                        playerLocations={playerLocation}
+                    />
+                    <ChipHolder
+                        plotPosition={"14"}
+                        playerColors={playerColors}
+                        playerLocations={playerLocation}
+                    />
+                    <ChipHolder
+                        plotPosition={"13"}
+                        playerColors={playerColors}
+                        playerLocations={playerLocation}
+                    />
+                    <ChipHolder
+                        plotPosition={"12"}
+                        playerColors={playerColors}
+                        playerLocations={playerLocation}
                     />
                 </div>
                 {/* Right Side */}
@@ -436,6 +532,28 @@ const Board: NextPage = ({ }) => {
                         backgroundImg={rowRightUrl}
                     />
                 </div>
+                <div className={`${sideStyling} right-[-161px] top-[41.5%] -rotate-90`}>
+                    <ChipHolder
+                        plotPosition={"10"}
+                        playerColors={playerColors}
+                        playerLocations={playerLocation}
+                    />
+                    <ChipHolder
+                        plotPosition={"9"}
+                        playerColors={playerColors}
+                        playerLocations={playerLocation}
+                    />
+                    <ChipHolder 
+                        plotPosition={"8"}
+                        playerColors={playerColors}
+                        playerLocations={playerLocation}
+                    />
+                    <ChipHolder
+                        plotPosition={"7"}
+                        playerColors={playerColors}
+                        playerLocations={playerLocation}
+                    />
+                </div>
                 {/* Left Side */}
                 <div className={`${sideStyling} left-[-160px] top-[41.5%]  transform rotate-90`}>
                     <Property 
@@ -453,6 +571,28 @@ const Board: NextPage = ({ }) => {
                     <Property 
                         players={['red', 'blue']}
                         backgroundImg={rowLeftUrl}
+                    />
+                </div>
+                <div className={`${sideStyling} left-[-160px] top-[41.5%]  transform rotate-90`}>
+                    <ChipHolder
+                        plotPosition={"20"}
+                        playerColors={playerColors}
+                        playerLocations={playerLocation}
+                    />
+                    <ChipHolder
+                        plotPosition={"19"}
+                        playerColors={playerColors}
+                        playerLocations={playerLocation}
+                    />
+                    <ChipHolder 
+                        plotPosition={"18"}
+                        playerColors={playerColors}
+                        playerLocations={playerLocation}
+                    />
+                    <ChipHolder
+                        plotPosition={"17"}
+                        playerColors={playerColors}
+                        playerLocations={playerLocation}
                     />
                 </div>
                 {/* Decorations */}
