@@ -37,7 +37,7 @@ export function ChipHolderFlex({plotPosition, playerLocations, playerColors, cla
             {playerLocations && playerLocations.map((item: any, index: any) => {
                     if(item == plotPosition) {
                         return (
-                            <div className="w-8 h-8 rounded-full z-50 mb-1 floating-box animate-pulse border-[1px] border-gray-700" style={{backgroundColor: playerColors[index]}}></div>
+                            <div key={index} className="w-8 h-8 rounded-full z-50 mb-1 floating-box animate-pulse border-[1px] border-gray-700" style={{backgroundColor: playerColors[index]}}></div>
                         )
                     }
                 })}

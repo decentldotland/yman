@@ -446,7 +446,7 @@ const Board: NextPage = ({ }) => {
                 <div className="bg-black opacity-75 flex flex-col justify-start items-center space-y-3 w-[300px] py-3 mb-[120px]">
                     <p className="font-bold underline">Players</p>
                     {playerList && playerList.length > 0 && playerList.map((item: any, _index: any) => (
-                        <div className="flex flex-row items-center space-x-1 justify-center">
+                        <div key={_index} className="flex flex-row items-center space-x-1 justify-center">
                             <div className="w-2 h-2 rounded-full" style={{backgroundColor: playerColors[_index]}}></div>
                             <p>{item}</p>
                         </div>
