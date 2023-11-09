@@ -17,6 +17,7 @@ const Board: NextPage = ({ }) => {
     const [playerList, setPlayerList] = useState<any>();
     const [gameStarted, setGameStarted] = useState(false);
     const [currentPlayerTurn, setCurrentPlayerTurn] = useState("");
+    const [gameWon, setGameWon] = useState(false);
 
     const { selector, modal, accounts, accountId } = useWalletSelector();
     
@@ -41,6 +42,32 @@ const Board: NextPage = ({ }) => {
     useEffect(() => {
         const fetchData = async () => {
           try {
+            const response = await axios.get('/api/getPlayerCount');
+            const payload = response.data
+            if(payload.play_turns.length > 0 && gameStarted) {
+                setCurrentPlayerTurn(payload.players[payload.play_turns[0]].near_id);
+            }
+          } catch (error) {
+            console.error('Error fetching data on currentPlayerTurn:', error);
+          }
+        };
+    
+        const intervalId = setInterval(() => {
+            if(!gameWon) {
+                fetchData();
+            } else {
+            clearInterval(intervalId); // Stop the interval when gameStarted is true
+          }
+        }, 2000);
+    
+        // Cleanup function to clear the interval when the component unmounts or gameStarted is true
+        return () => clearInterval(intervalId);
+      }, [gameStarted]);
+
+
+      useEffect(() => {
+        const fetchData = async () => {
+          try {
             // Axios GET request
             const response = await axios.get('/api/getPlayerCount');
     
@@ -59,7 +86,7 @@ const Board: NextPage = ({ }) => {
             console.error('Error fetching data:', error);
           }
         };
-    
+        fetchData();
         // Conduct Axios GET request every 2 seconds until gameStarted is true
         const intervalId = setInterval(() => {
           if (!gameStarted) {
@@ -138,8 +165,6 @@ const Board: NextPage = ({ }) => {
         return Math.floor(Math.random() * 6) + 1;
     }
 
-    console.log("CO", consoleOutput);
-
     async function startGame() {
         const startStatus = await axios('/api/startGame/');
         if(startStatus.data.status === "SUCCESS") {
@@ -172,7 +197,7 @@ const Board: NextPage = ({ }) => {
     }
 
     const sideStyling = "absolute flex flex-row w-[65%] mx-auto h-[16%] space-x-3"
-
+    console.log("Tok: ", playerList);
     return (
         <div 
             className="relative w-screen h-screen flex justify-center items-center"
@@ -223,8 +248,8 @@ const Board: NextPage = ({ }) => {
             
             */}
             <div className="absolute top-[30px] left-[1175px] bg-black opacity-75 rounded-sm h-[300px] w-[350px] z-40 p-3">
-                {consoleOutput === 0 && (<button className="text-white" onClick={() => handleSignIn()}>Connect Wallet</button>)}
-                {consoleOutput === 1 && playerList && !playerList.includes(accountId) && (
+                {consoleOutput === 0 && !gameStarted && (<button className="text-white" onClick={() => handleSignIn()}>Connect Wallet</button>)}
+                {consoleOutput === 1 && playerList && !playerList.includes(accountId) && !gameStarted && (
                     <div className="flex flex-col">
                         <p className="text-white">1. Pay 1 Near to sebastian1993.near to enter game lobby.</p>
                         <br />
@@ -234,8 +259,11 @@ const Board: NextPage = ({ }) => {
                         </form>
                     </div>
                 )}
-                {playerList && playerList.includes(accountId) && (
+                {playerList && playerList.includes(accountId) && !gameStarted && (
                     <p className="text-white">You have joined! Awaiting other players.</p>
+                )}
+                {gameStarted && currentPlayerTurn.length > 0 && (
+                    <p className="text-white">{`${currentPlayerTurn}, it is your turn!`}</p>
                 )}
             </div>
             {/* Decoration within Vegetation in Control Panel */}
