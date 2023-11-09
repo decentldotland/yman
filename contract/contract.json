@@ -1,0 +1,55 @@
+{
+  "players": {},
+  "play_turns": [],
+  "first_roll": true,
+  "is_game_started": false,
+  "admin_counter": 0,
+  "users_counter": 0,
+  "sig_message": "yactomanji::",
+  "treasury_address": "sebastian1993.near",
+  "admin": "0x9e7b250D4C3c4a71DDe4fE741502143f353c7603",
+  "plots": {
+    "one": { "players": [], "rules": null },
+    "two": { "players": [], "rules": null },
+    "three": { "players": [], "rules": null },
+    "four": { "players": [], "rules": null },
+    "five": { "players": [], "rules": null },
+    "six": {
+      "players": [],
+      "rules": { "type": "near_transfer", "owner": null }
+    },
+    "seven": { "players": [], "rules": null },
+    "eight": { "players": [], "rules": null },
+    "nine": { "players": [], "rules": null },
+    "ten": { "players": [], "rules": null },
+    "eleven": {
+      "players": [],
+      "rules": { "type": "ref finance swap", "owner": null }
+    },
+    "twelve": { "players": [], "rules": null },
+    "thirteen": { "players": [], "rules": null },
+    "fourteen": { "players": [], "rules": null },
+    "fifteen": { "players": [], "rules": null },
+    "sixteen": {
+      "players": [],
+      "rules": { "type": "mintbase action", "owner": null }
+    },
+    "seventeen": { "players": [], "rules": null },
+    "eighteen": { "players": [], "rules": null },
+    "nineteen": { "players": [], "rules": null },
+    "twenty": { "players": [], "rules": null }
+  },
+  "evm_molecule_endpoint": "http://evm.molecule.sh",
+  "proofs": [],
+  "signatures": [],
+  "publicFunctions": {
+    "startGame": ["admin_sig", "players_arr"],
+    "roll": [
+      "admin_sig",
+      "dice_result",
+      "player_addr",
+      "player_sig",
+      "pay_plot_rule"
+    ]
+  }
+}
